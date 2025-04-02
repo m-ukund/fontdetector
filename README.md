@@ -35,17 +35,6 @@ link to their contributions in all repos here. -->
 | Team member 2: Alex Gonzalez   |Model serving and monitoring (units 6-7)|            *To be added*                        |
 | Team member 3: Austin Ebel                    |Data pipeline (unit 8)|         *To be added*                           |
 
-## List of Responsibilites we have:
-* Model development
-* data pipeline
-* deployment
-* Data collection
-* training pipeline
-* synthetic data generation
-* backend setup
-* model serving
-* frontend uploader integration
-
 
 ### System diagram
 
@@ -101,15 +90,16 @@ We will use transfer learning by fine-tuning a pretrained **ResNet18** model on 
 * Datasets stored in Chameleon persistent volume
 * ResNet18 fine-tuned in a GPU container (PytTorch)
 * MLflow for experiment tracking
-* Ray cluster for job scheduling and parallel experiments
+* Ray Train for distributed training
+* Ray Tune for hyperparameter optimization 
 
 **Justification:**
-This approach balances performance and speed. ResNet18 provides good results with manageable training times. Training on both syntehtic and real data improves generalization. training on Chameleon using Ray allows scheduling and reproducibility.
+This approach balances performance and speed. ResNet18 provides good results with manageable training times. Training on both syntehtic and real data improves generalization. Training on Chameleon using Ray allows scheduling and reproducibility.
 
 **Lecture Tie-Ins:**
 * Unit 4: Transfer Learning, scale with Ray
 * Unit 5: Infrastructure provisioning and containerization
-* Difficulty Point: ?
+* Difficulty Point: Ray Train and Ray Tune integration for scalable and tuned training
 
 **Numbers:**
 * Training time per run: ? (GPU)
@@ -122,25 +112,24 @@ and which optional "difficulty" points you are attempting. -->
 
 #### Model serving and monitoring platforms
 **Strategy:** 
-The model will be wrapped in a **FastAPI service** and served via an inference container. We will expose a REST endpoint (/predict) that accepts image uploads and returns the top-1 font predicitons. Monitoring will be done via...
+The model will be wrapped in a **FastAPI service** and served via an inference container. We will expose a REST endpoint (/predict) that accepts image uploads and returns the top-1 font predicitons. We will deploy two model versions and route traffic using basic logic to support canary evaluation.
 
 **Diagram Components:**
-* Model Continer (FastAPI)
-* REST API
-* Frontend image uploader connected to API
-* metrics...
+* FastAPI container exposing predict and metrics
+* Canary routing script for controlled deployment testing
+  
 
 **Justification:**
-FastAPI is fast and lightweight for real-time inference. 
+FastAPI is fast and lightweight for real-time inference. Canary evaluation allows us to test updated models in production with limited user exposer before full promotion.
 
 **Lecture Tie-Ins:**
 * Unit 6: Containerized API serving, latency analysis
 * Unit 7: Monitering with
-* Difficulty Point: ?
+* Difficulty Point: Canary Evaluation with live traffic splitting and monitoring
 
 **Metrics:**
 * Inference latency target: <300ms per request
-* Throughput: ~10-20 concurrent requests?
+* Throughput: 10-20 concurrent requests under load
 * Serving from both CPU and GPU environments will be benchmarked
 
 <!-- Make sure to clarify how you will satisfy the Unit 6 and Unit 7 requirements, 
@@ -161,4 +150,4 @@ For Continuous Training, we will configure an automated re-training pipeline tha
 
 
 
-(Our two difficulty points are Ray Train and ______). 
+(Our two difficulty points are Ray Train and Canary Evaluation). 
