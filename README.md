@@ -37,9 +37,7 @@ link to their contributions in all repos here. -->
 
 
 ### System diagram
-
-![FontDetector (1)](https://github.com/user-attachments/assets/cb8e04bb-7bb4-4c18-9bdd-014bf76f1b1a)
-
+![FontDetector (2)](https://github.com/user-attachments/assets/d3127bb7-0cc6-4ba5-ad13-821793ebe43e)
 
 ### Summary of outside materials
 
