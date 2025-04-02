@@ -30,10 +30,10 @@ link to their contributions in all repos here. -->
 
 | Name                            | Responsible for | Link to their commits in this repo |
 |---------------------------------|-----------------|------------------------------------|
-| All team members                |                 |                                    |
-| Team member 1: Mukund Ramakrishnan                   |         |        *To be added*                            |
-| Team member 2: Alex Gonzalez                   |              |            *To be added*                        |
-| Team member 3: Austin Ebel                  |                 |         *To be added*                           |
+| All team members                |Overall design, integration, and testing|                                    |
+| Team member 1: Mukund Ramakrishnan           |Model training|        *To be added*                            |
+| Team member 2: Alex Gonzalez   |Model serving and monitoring|            *To be added*                        |
+| Team member 3: Austin Ebel                    |Data pipeline|         *To be added*                           |
 
 ## List of Responsibilites we have:
 * Model development
@@ -49,9 +49,16 @@ link to their contributions in all repos here. -->
 
 ### System diagram
 
-<!-- Overall digram of system. Doesn't need polish, does need to show all the pieces. 
-Must include: all the hardware, all the containers/software platforms, all the models, 
-all the data. -->
+
+(I'll make this diagram on drawIO).
+
+Frontend (user interface) will be a web uploader with React, similar to the GourmetGram uploader used by Prof. Fund in her labs.
+Backend API (fast API)
+Model training (chameleon GPUs)
+Persistent Storage
+Experiment Tracking
+Ray Cluster
+CI/CD pipeline 
 
 ### Summary of outside materials
 
@@ -141,11 +148,17 @@ and which optional "difficulty" points you are attempting. -->
 
 #### Data pipeline
 
-<!-- Make sure to clarify how you will satisfy the Unit 8 requirements,  and which 
-optional "difficulty" points you are attempting. -->
+We will create an ETL pipeline (extract-transfer-load) and with that, we will implement data cleaning and labeling and store that data in persistent volumes on Chameleon. We will write a script and implement tools to extract text from the "real world" (scans of fonts in the wild) to simulate production use. This simulated data will incorporate scanned images from a variety of sources, such as magazines like The New Yorker, printed books, advertising flyers, and similar texts. 
+
 
 #### Continuous X
 
-<!-- Make sure to clarify how you will satisfy the Unit 3 requirements,  and which 
-optional "difficulty" points you are attempting. -->
+We will create a Continuous X pipeline to automate and streamline the entire machine learning lifecycle, ensuring consistency, reliability, and reproducibility of our system. This will include Continuous Integration (CI), Continuous Deployment (CD), and Continuous Training (CT).
 
+For CI/CD, we will use ArgoCD to define automated workflows for building, testing, and deploying our model. When new code is pushed or a pull request is made, the CI pipeline will trigger unit tests, model validation, and container builds. Successful builds will then be deployed to staging environments for testing.
+
+For Continuous Training, we will configure an automated re-training pipeline that triggers when new training data becomes available or when model performance degrades in production (detected via our monitoring tools). This pipeline will run on the Chameleon infrastructure using Ray clusters to perform distributed training efficiently. The retraining process will include hyperparameter tuning through Ray Tune to continuously improve model accuracy.
+
+
+
+(Our two difficulty points are Ray Train and ______). 
