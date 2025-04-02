@@ -115,7 +115,7 @@ and which optional "difficulty" points you are attempting. -->
 
 #### Model serving and monitoring platforms
 **Strategy:** 
-The model will be wrapped in a **FastAPI service** and served via an inference container. We will expsoe a REST endpoint (/predict) that accepts image uploads and returns the top-1 font predicitons. Monitoring will be done via...
+The model will be wrapped in a **FastAPI service** and served via an inference container. We will expose a REST endpoint (/predict) that accepts image uploads and returns the top-1 font predicitons. Monitoring will be done via...
 
 **Diagram Components:**
 * Model Continer (FastAPI)
