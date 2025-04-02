@@ -38,16 +38,8 @@ link to their contributions in all repos here. -->
 
 ### System diagram
 
+![FontDetector (1)](https://github.com/user-attachments/assets/cb8e04bb-7bb4-4c18-9bdd-014bf76f1b1a)
 
-(I'll make this diagram on drawIO).
-
-Frontend (user interface) will be a web uploader with React, similar to the GourmetGram uploader used by Prof. Fund in her labs.
-Backend API (fast API)
-Model training (chameleon GPUs)
-Persistent Storage
-Experiment Tracking
-Ray Cluster
-CI/CD pipeline 
 
 ### Summary of outside materials
 
