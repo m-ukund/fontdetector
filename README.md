@@ -28,7 +28,7 @@ Then, each row after that is: name of contributor, their role, and in the third 
 you will link to their contributions. If your project involves multiple repos, you will 
 link to their contributions in all repos here. -->
 
-| Name                            | Responsible for | Link to their commits in this repo |
+| Name                            | Responsible for (subject to change) | Link to their commits in this repo |
 |---------------------------------|-----------------|------------------------------------|
 | All team members                |Overall design, integration, and testing|                                    |
 | Team member 1: Mukund Ramakrishnan           |Model training and training platforms (units 4-5)|        *To be added*                            |
