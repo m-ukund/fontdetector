@@ -37,12 +37,12 @@ link to their contributions in all repos here. -->
 
 ## List of Responsibilites we have:
 * Model development
-*  data pipeline
-*   deployment
+* data pipeline
+* deployment
 * Data collection
-*  training pipeline
+* training pipeline
 * synthetic data generation
-*  backend setup
+* backend setup
 * model serving
 * frontend uploader integration
 
@@ -87,7 +87,8 @@ diagram, (3) justification for your strategy, (4) relate back to lecture materia
 (5) include specific numbers. -->
 
 #### Model training and training platforms
-**Strategy**: We will use transfer learning by fine-tuning a pretrained **ResNet18** model on our font classification datasets. The datasets include Adobe VFR and syntehtic Google Fonts rendered via a Python pipeline. Training will include data augmentation to increase robustness.
+**Strategy**: 
+We will use transfer learning by fine-tuning a pretrained **ResNet18** model on our font classification datasets. The datasets include Adobe VFR and syntehtic Google Fonts rendered via a Python pipeline. Training will include data augmentation to increase robustness.
 
 **Diagram Components:**
 * Datasets stored in Chameleon persistent volume
@@ -113,7 +114,8 @@ This approach balances performance and speed. ResNet18 provides good results wit
 and which optional "difficulty" points you are attempting. -->
 
 #### Model serving and monitoring platforms
-**Strategy:** The model will be wrapped in a **FastAPI service** and served via an inference container. We will expsoe a REST endpoint (/predict) that accepts image uploads and returns the top-1 font predicitons. Monitoring will be done via...
+**Strategy:** 
+The model will be wrapped in a **FastAPI service** and served via an inference container. We will expsoe a REST endpoint (/predict) that accepts image uploads and returns the top-1 font predicitons. Monitoring will be done via...
 
 **Diagram Components:**
 * Model Continer (FastAPI)
