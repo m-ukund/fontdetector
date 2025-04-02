@@ -31,9 +31,9 @@ link to their contributions in all repos here. -->
 | Name                            | Responsible for | Link to their commits in this repo |
 |---------------------------------|-----------------|------------------------------------|
 | All team members                |Overall design, integration, and testing|                                    |
-| Team member 1: Mukund Ramakrishnan           |Model training|        *To be added*                            |
-| Team member 2: Alex Gonzalez   |Model serving and monitoring|            *To be added*                        |
-| Team member 3: Austin Ebel                    |Data pipeline|         *To be added*                           |
+| Team member 1: Mukund Ramakrishnan           |Model training and training platforms (units 4-5)|        *To be added*                            |
+| Team member 2: Alex Gonzalez   |Model serving and monitoring (units 6-7)|            *To be added*                        |
+| Team member 3: Austin Ebel                    |Data pipeline (unit 8)|         *To be added*                           |
 
 ## List of Responsibilites we have:
 * Model development
