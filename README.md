@@ -1,8 +1,8 @@
-# FontDetector
+# ML Ops Project
 This is the ML Ops project, a deep-learning-based tool that detects which font from a database of fonts given an image of some characters. 
 
 
-## Title of project
+## Font Detector
 **FontDetector** is a machine learning system that integrates into existing graphic design or branding workflows to automatically detect fonts from uploaded images. In current industry practice, font matching is done manually or with inconsistent third-party tools. FontDetector improves accuracy and reduces time spent on font identification by using deep learning and image processing. The business value lies in improving designer productivity and accuracy, especially in marketing, publishing, and type design work.
 
 Business Metrics:
