@@ -3,13 +3,14 @@ This is the ML Ops project, a deep-learning-based tool that detects which font f
 
 
 ## Font Detector
-**FontDetector** is a machine learning system designed to integrate directly into **Adobe Photoshop**, enabling users to identify fonts from any image layer with a single click. In current workflows, Photoshop users must manually search for matching fonts or rely on external tools with inconsistent results. Our tool eliminates that friction by letting users select a region of text, send it to FontDetector, and instantly receive the closest matching font -- along with a downloadable .ttf file ready for use in Photoshop.
+**FontDetector** is a machine learning system designed to integrate directly into **Adobe Photoshop**, enabling users to identify fonts from any image layer with a single click. In current workflows, Photoshop users must manually search for matching fonts or rely on external tools with inconsistent results. Our tool eliminates that friction by letting users select a region of text, send it to FontDetector, and instantly receive the closest matching font -- along with a downloadable .ttf (TrueType Font) file ready for use in Photoshop.
 
-#### Added Value:
-* Enhances user productivity during brand/layout work
-* Reduces time spent switching between tools
-* Increasing customer satisfaction by streamlining font discovery
-* Differentiating Photoshop from competing design software platforms
+#### Business Impact for Adobe
+FontDetector enhances Photoshop's offering by streamlining font identification, a common pain point for designers. Key business metrics for Adobe Photoshop include:
+- Increased user retention through ba etter user experience
+- Reduced need for third-party font tools, keeping users within Photoshop
+- Increased subscription value, potentially justifying higher-tier pricing or upsells
+- Greater appeal to marketing, branding, and publishing professionals
   
 <!-- 
 Discuss: Value proposition: Your will propose a machine learning system that can be 
@@ -62,7 +63,7 @@ The table below shows an example, it is not a recommendation. -->
 
 | Requirement     | How many/when                                     | Justification |
 |-----------------|---------------------------------------------------|---------------|
-| `m1.medium` VMs | 3 for entire project duration                     | For Backend services, model orchestration, and frontent           |
+| `m1.medium` VMs | 3 for entire project duration                     | For Backend services, model orchestration, and frontend           |
 | `gpu_mi100`     | 4 hour block twice a week                         |  For model training and fine-tuning on image data             |
 | Floating IPs    | 1 for entire project duration, 1 for sporadic use |      To host the frontend uploader + model inference API         |
 | *Volume Storage*     (unsure)        |           50GB persistent Volume                                        |        To store datasets and model checkpoints       |
@@ -103,7 +104,7 @@ and which optional "difficulty" points you are attempting. -->
 
 #### Model serving and monitoring platforms
 **Strategy:** 
-The model will be wrapped in a **FastAPI service** and served via an inference container. We will expose a REST endpoint (/predict) that accepts image uploads and returns the top-1 font predicitons. We will deploy two model versions and route traffic using basic logic to support canary evaluation.
+The model will be wrapped in a **FastAPI service** and served via an inference container. We will expose a REST endpoint (/predict) that accepts image uploads and returns the top-1 font predictions. We will deploy two model versions and route traffic using basic logic to support canary evaluation.
 
 **Diagram Components:**
 * FastAPI container exposing predict and metrics
