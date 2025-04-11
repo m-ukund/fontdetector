@@ -101,6 +101,9 @@ train_dataset = datasets.ImageFolder(os.path.join(config["data_dir"], "training"
 val_dataset = datasets.ImageFolder(os.path.join(config["data_dir"], "validation"), transform=val_test_transform)
 test_dataset = datasets.ImageFolder(os.path.join(config["data_dir"], "evaluation"), transform=val_test_transform)
 
+# Automatically determine the number of font classes
+config["num_classes"] = len(train_dataset.classes)
+
 train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=False)
