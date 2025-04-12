@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 import shutil
 import random
 
-config["data_dir"] = os.getenv("FONTS_DATA_DIR", "Fonts")
+config["data_dir"] = os.getenv("FONTS_DATA_DIR", "adobe_vfr")
 
 def prepare_dataset(adobe_path, synth_path, combined_path, split_ratio=(.7,.15,.15)):
   def merge_classes(from_dir, to_dir):
@@ -53,7 +53,8 @@ def prepare_dataset(adobe_path, synth_path, combined_path, split_ratio=(.7,.15,.
           shutil.copy(os.path.join(tmp_dir, cls, fname), os.path.join(split_cls, fname))
     shutil.rmtree(tmp_dir)
 
-prepare_dataset("Fonts/training", "Fonts/evaluation", "Fonts")
+#prepare_dataset("Fonts/training", "Fonts/evaluation", "Fonts")
+
 ### Configuration
 config = {
     "initial_epochs": 5,
@@ -70,7 +71,7 @@ config = {
     "color_jitter_saturation": 0.2,
     "color_jitter_hue": 0.1,
     "num_classes": 200,  # Update this with your number of fonts
-    "data_dir": os.getenv("FONTS_DATA_DIR", "Fonts")
+    "data_dir": os.getenv("FONTS_DATA_DIR", "adobe_vfr")
 }
 
 ### Transforms
@@ -201,4 +202,5 @@ for epoch in range(config["initial_epochs"], config["total_epochs"]):
 ### Final Evaluation
 resnet50_model.load_state_dict(torch.load("best_resnet50.pth"))
 test_loss, test_acc = validate(resnet50_model, test_loader, criterion, device)
-print(f"✅ Test Accuracy: {test_acc * 100:.2f}%")
+print(f"Test Accuracy: {test_acc * 100:.2f}%")
+
