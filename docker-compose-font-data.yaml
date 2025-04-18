@@ -1,0 +1,54 @@
+# font_data_preparation/docker-compose-font-data.yaml
+version: '3.8'
+
+volumes:
+  # Declare the volumes we expect to exist externally
+  # These must be created using 'docker volume create <name>' before running this
+  adobe_vfr:
+    external: true
+    name: adobe_vfr # Explicitly map external name (optional but good practice)
+  google_fonts:
+    external: true
+    name: google_fonts
+  synthetic_fonts:
+    external: true
+    name: synthetic_fonts
+
+services:
+  # Define the data preparation service
+  font-data-prep-service:
+    # Instruct Compose to build an image using the Dockerfile
+    # in the current directory (where this compose file is located)
+    build: .
+    # Optional: Give the image built by compose a specific tag
+    # image: my-font-data-prep:latest
+
+    # Mount the externally created volumes into specific paths inside the container
+    # Format: <external_volume_name>:<path_inside_container>
+    volumes:
+      - adobe_vfr:/data/adobe       # Adobe VFR data will go here
+      - google_fonts:/data/google   # Google Fonts data will go here
+      - synthetic_fonts:/data/synthetic # Synthetic images will go here
+
+    # Define the command sequence to run inside the container
+    command:
+      - bash
+      - -c # Execute the following string using bash
+      - |
+        set -e
+
+        echo "[Compose] Downloading Adobe VFR dataset..."
+        kaggle datasets download -d luisgoncalo/adobe-visual-font-recognition -p /data/adobe --unzip
+        echo "[Compose] Adobe VFR downloaded and extracted."
+
+        echo "[Compose] Downloading Google Fonts dataset..."
+        kaggle datasets download -d prasunroy/google-fonts-for-stefann -p /data/google --unzip
+        echo "[Compose] Google Fonts downloaded and extracted."
+
+        echo "[Compose] Generating synthetic images..."
+        python3 /workspace/generate_synthetic_images.py
+
+        echo "[Compose] Font data preparation finished successfully."
+
+    # This service is a one-off task; it should not restart automatically
+    restart: "no"
