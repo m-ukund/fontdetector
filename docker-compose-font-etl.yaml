@@ -23,7 +23,7 @@ services:
         apt-get update && apt-get install -y unzip
         echo "[extract-adobe] Downloading Adobe VFR …"
         kaggle datasets download -d luisgoncalo/adobe-visual-font-recognition \
-          -p /data/adobevfr --unzip
+          -p /data/adobevfr
         echo "[extract-adobe] Adobe VFR downloaded."
 
         # check contents
