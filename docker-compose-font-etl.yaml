@@ -4,30 +4,31 @@ volumes:
   fontdata:
 
 services:
-###############################################################################
-# 1️⃣  EXTRACT Adobe-VFR
-###############################################################################
-    extract-adobe:
-  image: python:3.11-slim
-  user: root
-  volumes:
-    - fontdata:/data
-    - /tmp/kaggle.json:/root/.kaggle/kaggle.json:ro
-  working_dir: /data
-  command:
-    - bash
-    - -c
-    - |
-      set -e
-      pip install --no-cache-dir kaggle
-      apt-get update && apt-get install -y unzip
-      echo "[extract-adobe] Downloading Adobe VFR …"
-      kaggle datasets download -d luisgoncalo/adobe-visual-font-recognition \
-             -p /data/adobevfr --unzip
-      echo "[extract-adobe] Adobe VFR downloaded."
+  ###############################################################################
+  # 1️⃣  EXTRACT Adobe-VFR
+  ###############################################################################
+  extract-adobe:
+    image: python:3.11-slim
+    user: root
+    volumes:
+      - fontdata:/data
+      - /tmp/kaggle.json:/root/.kaggle/kaggle.json:ro
+    working_dir: /data
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        pip install --no-cache-dir kaggle
+        apt-get update && apt-get install -y unzip
+        echo "[extract-adobe] Downloading Adobe VFR …"
+        kaggle datasets download -d luisgoncalo/adobe-visual-font-recognition \
+          -p /data/adobevfr --unzip
+        echo "[extract-adobe] Adobe VFR downloaded."
 
-      # check contents
-      ls -l /data/adobevfr
+        # check contents
+        ls -l /data/adobevfr
+
 ###############################################################################
 # 2️⃣  EXTRACT Google Fonts
 ###############################################################################
