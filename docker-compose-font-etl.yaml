@@ -1,85 +1,111 @@
-# -----------------------------------------------------------------------------
-# Unified ETL for Adobe-VFR + Google Fonts + synthetic renders → Swift
-# -----------------------------------------------------------------------------
-name: font-etl                # shown by `docker compose ls`
-version: "3.9"
+# ---------------------------------------------------------------------------
+# Font ETL pipeline
+#   1) download Adobe-VFR   → /data/AdobeVFR
+#   2) clone Google Fonts   → /data/GoogleFonts
+#   3) render synthetic PNG → /data/Synthetic     (optional profile "full")
+#   4) sync everything to Swift/S3               (optional profile "full")
+#
+# To run only downloads:
+#   docker compose -f docker-compose-font-etl.yaml up extract-adobe extract-gfonts
+#
+# Full pipeline (needs RCLONE_CONTAINER env var):
+#   export RCLONE_CONTAINER=object-persist-adg7899
+#   docker compose -f docker-compose-font-etl.yaml --profile full up
+# ---------------------------------------------------------------------------
+
+name: font-etl        # project name shown by `docker compose ls`
 
 volumes:
-  fontdata:                   # one persistent Docker volume
+  fontdata:           # one persistent dataset volume
 
 services:
-  ########################################################################
-  # 1️⃣  EXTRACT Adobe-VFR  (uses the custom image with kaggle CLI)
-  ########################################################################
+###############################################################################
+# 1️⃣  EXTRACT Adobe-VFR  (uses kaggle CLI)
+###############################################################################
   extract-adobe:
-    build: ./docker/adobe           # <─ points to the Dockerfile above
+    image: kaggle/kaggle:latest        # already has kaggle CLI + python
+    user: root
     volumes:
       - fontdata:/data
-      - ~/.kaggle:/root/.kaggle:ro
-    command: >
-      bash -c "
+      - ~/.kaggle:/root/.kaggle:ro     # mount kaggle.json
+    working_dir: /data
+    command:
+      - bash
+      - -c
+      - |
         set -e
+        echo "[extract-adobe] Downloading Adobe VFR …"
         kaggle datasets download -d luisgoncalo/adobe-visual-font-recognition \
-               -p /data --unzip
-        mv /data/adobe-visual-font-recognition /data/AdobeVFR
-      "
+               -p . --unzip
+        mv adobe-visual-font-recognition AdobeVFR
+        echo "[extract-adobe] Done ⇒ $(du -sh AdobeVFR | cut -f1)"
 
-  ########################################################################
-  # 2️⃣  EXTRACT Google Fonts (corrected command syntax)
-  ########################################################################
+###############################################################################
+# 2️⃣  EXTRACT Google Fonts  (shallow git clone)
+###############################################################################
   extract-gfonts:
-    image: alpine/git     # still fine
+    image: alpine/git:latest
     volumes:
       - fontdata:/data
+    working_dir: /data
     command:
       - sh
       - -c
       - |
         set -e
         echo "[extract-gfonts] Cloning Google Fonts …"
-        git clone --depth 1 https://github.com/google/fonts.git /data/GoogleFonts
-
+        git clone --depth 1 https://github.com/google/fonts.git GoogleFonts
+        echo "[extract-gfonts] Done ⇒ $(du -sh GoogleFonts | cut -f1)"
 
 ###############################################################################
-# 3) TRANSFORM  Generate synthetic renders (optional)
+# 3️⃣  SYNTHETIC RENDER  (profile "full")
 ###############################################################################
   synth-gen:
-    image: python:3.11
+    image: python:3.11-slim           # lightweight base
     volumes:
       - fontdata:/data
-      - .:/workspace               # mount repo so the script is visible
+      - .:/workspace                  # mount repo so script is visible
     working_dir: /workspace
-    command: >
-      bash -c "
-        pip install pillow tqdm freetype-py;
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        pip install --no-cache-dir pillow tqdm freetype-py
+        echo "[synth-gen] Rendering PNGs …"
         python generate_synthetic_images.py \
           --fonts_dir /data/GoogleFonts \
           --out_dir  /data/Synthetic \
           --images_per_font 200
-      "
+        echo "[synth-gen] Done ⇒ $(du -sh /data/Synthetic | cut -f1)"
     depends_on:
       extract-adobe:
         condition: service_completed_successfully
       extract-gfonts:
         condition: service_completed_successfully
-    profiles: ["full"]            # run only with  --profile full
+    profiles: ["full"]                # run only with --profile full
 
 ###############################################################################
-# 4) LOAD  Push everything to Swift (persistent object storage)
+# 4️⃣  LOAD to Swift / S3  (profile "full")
 ###############################################################################
   load-fonts:
     image: rclone/rclone:latest
     volumes:
       - fontdata:/data
       - ~/.config/rclone/rclone.conf:/root/.config/rclone/rclone.conf:ro
-    environment:
-      - RCLONE_CONTAINER=${RCLONE_CONTAINER:?err}   # export before running!
     entrypoint: /bin/sh
-    command: -c '
-      set -e
-      echo "[load] Syncing /data ➜ chi_tacc:$RCLONE_CONTAINER …"
-      rclone sync /data chi_tacc:$RCLONE_CONTAINER --progress
-    '
+    command:
+      - -c
+      - |
+        set -e
+        if [ -z "$RCLONE_CONTAINER" ]; then
+          echo "ERROR: RCLONE_CONTAINER is not set"; exit 1
+        fi
+        echo "[load] Syncing /data → chi_tacc:$RCLONE_CONTAINER …"
+        rclone sync /data chi_tacc:$RCLONE_CONTAINER --progress \
+          --transfers=32 --checkers=16 --multi-thread-streams=4 --fast-list
+        echo "[load] Listing top-level dirs:"
+        rclone lsd chi_tacc:$RCLONE_CONTAINER
     depends_on:
       synth-gen:
         condition: service_completed_successfully
