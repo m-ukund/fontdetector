@@ -7,38 +7,38 @@ version: "3.9"
 volumes:
   fontdata:                   # one persistent Docker volume
 
-###############################################################################
-# 1) EXTRACT  Adobe-VFR
-###############################################################################
 services:
+  ########################################################################
+  # 1️⃣  EXTRACT Adobe-VFR  (uses the custom image with kaggle CLI)
+  ########################################################################
   extract-adobe:
-    image: python:3.11
-    user: root
+    build: ./docker/adobe           # <─ points to the Dockerfile above
     volumes:
       - fontdata:/data
-      - ~/.kaggle:/root/.kaggle:ro          # Kaggle token
-    working_dir: /data
+      - ~/.kaggle:/root/.kaggle:ro
     command: >
       bash -c "
         set -e
         kaggle datasets download -d luisgoncalo/adobe-visual-font-recognition \
-               -p . --unzip
-        mv adobe-visual-font-recognition AdobeVFR
+               -p /data --unzip
+        mv /data/adobe-visual-font-recognition /data/AdobeVFR
       "
 
-###############################################################################
-# 2) EXTRACT  Google Fonts (shallow clone)
-###############################################################################
+  ########################################################################
+  # 2️⃣  EXTRACT Google Fonts (corrected command syntax)
+  ########################################################################
   extract-gfonts:
-    image: alpine/git
+    image: alpine/git     # still fine
     volumes:
       - fontdata:/data
-    working_dir: /data
-    command: >
-      sh -c "
+    command:
+      - sh
+      - -c
+      - |
         set -e
-        git clone --depth 1 https://github.com/google/fonts.git GoogleFonts
-      "
+        echo "[extract-gfonts] Cloning Google Fonts …"
+        git clone --depth 1 https://github.com/google/fonts.git /data/GoogleFonts
+
 
 ###############################################################################
 # 3) TRANSFORM  Generate synthetic renders (optional)
