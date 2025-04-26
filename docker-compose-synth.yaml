@@ -6,11 +6,11 @@ services:
       context: .
       dockerfile: Dockerfile.synthetic
     volumes:
-      - /mnt/block100:/mnt/block100
+      - /mnt/block100:/data
     command:
       - --fonts_dir
-      - /mnt/block100/GoogleFonts
+      - /data/GoogleFonts
       - --out_dir
-      - /mnt/block100/Synthetic
+      - /data/Synthetic
       - --images_per_font
       - "200"
