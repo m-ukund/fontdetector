@@ -1,0 +1,51 @@
+#################################################################################
+# 
+# To mount AdobeVFR: docker compose -f docker-compose-train.yaml run train-adobe
+# To mount Synth: docker compose -f docker-compose-train.yaml run train-synthetic
+# 
+#################################################################################
+
+version: '3.8'
+
+services:
+  ###############################################################################
+  # 1:  TRAIN on Adobe VFR
+  ###############################################################################
+  train-adobe:
+    image: python:3.11-slim
+    user: root
+    working_dir: /workspace
+    volumes:
+      - /mnt/block100/adobevfr:/workspace/adobevfr
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        echo "[train-adobe] Installing training libraries..."
+        pip install torch torchvision tqdm matplotlib
+        echo "[train-adobe] Starting training with Adobe VFR..."
+        # Example command — replace with your real script
+        # python your_training_script.py --data_dir /workspace/adobevfr
+    tty: true
+
+  ###############################################################################
+  # 2:  TRAIN on Synthetic Dataset
+  ###############################################################################
+  train-synthetic:
+    image: python:3.11-slim
+    user: root
+    working_dir: /workspace
+    volumes:
+      - /mnt/block100/Synthetic:/workspace/Synthetic
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        echo "[train-synthetic] Installing training libraries..."
+        pip install torch torchvision tqdm matplotlib
+        echo "[train-synthetic] Starting training with Synthetic dataset..."
+        # Example command — replace with your real script
+        # python your_training_script.py --data_dir /workspace/Synthetic
+    tty: true
