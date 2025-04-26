@@ -1,3 +1,4 @@
+# Helps run load and run the script generate_synthetic_images onto a docker
 FROM python:3.11-slim
 
 WORKDIR /workspace
