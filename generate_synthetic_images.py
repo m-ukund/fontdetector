@@ -1,8 +1,9 @@
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-font_dir = "/data/google"
-output_dir = "/data/synthetic"
+# Correct paths
+font_dir = "/data/GoogleFonts"
+output_dir = "/data/Synthetic"
 text_samples = ["Sample", "Font123", "HelloWorld"]
 img_size = (224, 224)
 
