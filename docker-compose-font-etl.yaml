@@ -1,8 +1,3 @@
-name: font-etl
-
-volumes:
-  fontdata:
-
 services:
   ###############################################################################
   # 1️⃣  EXTRACT Adobe-VFR
@@ -12,7 +7,7 @@ services:
     user: root
     volumes:
       - fontdata:/data
-      - /tmp/kaggle.json:/root/.kaggle/kaggle.json:ro
+      - /mnt/block/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
     working_dir: /data
     command:
       - bash
@@ -21,52 +16,47 @@ services:
         set -e
         pip install --no-cache-dir kaggle
         apt-get update && apt-get install -y unzip
-        echo "[extract-adobe] Downloading Adobe VFR …"
-        kaggle datasets download -d luisgoncalo/adobe-visual-font-recognition \
-          -p /data/adobevfr
-        echo "[extract-adobe] Adobe VFR downloaded."
+        echo "[extract-adobe] Downloading Adobe VFR..."
+        kaggle datasets download -d luisgoncalo/adobe-visual-font-recognition -p /data/adobevfr
+        echo "[extract-adobe] Adobe VFR .zip downloaded."
+        ls -lh /data/adobevfr
 
-        # check contents
-        ls -l /data/adobevfr
-
-###############################################################################
-# 2️⃣  EXTRACT Google Fonts
-###############################################################################
+  ###############################################################################
+  # 2️⃣  EXTRACT Google Fonts
+  ###############################################################################
   extract-gfonts:
-    image: alpine/git:latest
+    image: python:3.11-slim
+    user: root
     volumes:
       - fontdata:/data
     working_dir: /data
-    command:
-      - sh
-      - -c
-      - |
-        set -e
-        echo "[extract-gfonts] Cloning Google Fonts …"
-        git clone --depth 1 https://github.com/google/fonts.git GoogleFonts
-        echo "[extract-gfonts] Done ⇒ $(du -sh GoogleFonts | cut -f1)"
-
-###############################################################################
-# 3️⃣  SYNTHETIC RENDER (optional profile: full)
-###############################################################################
-  synth-gen:
-    image: python:3.11-slim
-    volumes:
-      - fontdata:/data
-      - .:/workspace
-    working_dir: /workspace
     command:
       - bash
       - -c
       - |
         set -e
-        pip install --no-cache-dir pillow tqdm freetype-py
-        echo "[synth-gen] Rendering PNGs …"
-        python generate_synthetic_images.py \
+        apt-get update && apt-get install -y git
+        echo "[extract-gfonts] Cloning Google Fonts..."
+        git clone --depth 1 https://github.com/google/fonts.git /data/GoogleFonts
+        echo "[extract-gfonts] Google Fonts cloned."
+        ls -lh /data/GoogleFonts
+
+  ###############################################################################
+  # 3️⃣  SYNTHETIC IMAGE GENERATION
+  ###############################################################################
+  synth-gen:
+    build: ./synthetic
+    volumes:
+      - fontdata:/data
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        python3 /workspace/generate_synthetic_images.py \
           --fonts_dir /data/GoogleFonts \
           --out_dir  /data/Synthetic \
           --images_per_font 200
-        echo "[synth-gen] Done ⇒ $(du -sh /data/Synthetic | cut -f1)"
     depends_on:
       extract-adobe:
         condition: service_completed_successfully
@@ -74,16 +64,16 @@ services:
         condition: service_completed_successfully
     profiles: ["full"]
 
-###############################################################################
-# 4️⃣  LOAD into Swift (profile: full)
-###############################################################################
+  ###############################################################################
+  # 4️⃣  LOAD DATA INTO OBJECT STORAGE
+  ###############################################################################
   load-fonts:
     image: rclone/rclone:latest
     volumes:
       - fontdata:/data
       - ~/.config/rclone/rclone.conf:/root/.config/rclone/rclone.conf:ro
     environment:
-      - RCLONE_CONTAINER=${RCLONE_CONTAINER:?err}
+      RCLONE_CONTAINER: ${RCLONE_CONTAINER}
     entrypoint: /bin/sh
     command:
       - -c
@@ -93,12 +83,22 @@ services:
           echo "ERROR: RCLONE_CONTAINER is not set"
           exit 1
         fi
-        echo "[load] Syncing /data → chi_tacc:$RCLONE_CONTAINER …"
-        rclone sync /data chi_tacc:$RCLONE_CONTAINER --progress \
-          --transfers=32 --checkers=16 --multi-thread-streams=4 --fast-list
-        echo "[load] Listing top-level dirs:"
+        echo "[load-fonts] Syncing /data to chi_tacc:$RCLONE_CONTAINER..."
+        rclone sync /data chi_tacc:$RCLONE_CONTAINER --progress
+        echo "[load-fonts] Listing container contents:"
         rclone lsd chi_tacc:$RCLONE_CONTAINER
     depends_on:
       synth-gen:
         condition: service_completed_successfully
     profiles: ["full"]
+
+###############################################################################
+# 5️⃣  VOLUMES
+###############################################################################
+volumes:
+  fontdata:
+    driver: local
+    driver_opts:
+      type: none
+      device: /mnt/block
+      o: bind
