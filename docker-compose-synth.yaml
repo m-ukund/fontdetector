@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  synth-gen:
+    build:
+      context: .
+      dockerfile: Dockerfile.synthetic
+    volumes:
+      - /mnt/block100:/mnt/block100
+    command:
+      - --fonts_dir
+      - /mnt/block100/GoogleFonts
+      - --out_dir
+      - /mnt/block100/Synthetic
+      - --images_per_font
+      - "200"
