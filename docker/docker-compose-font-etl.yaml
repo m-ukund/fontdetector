@@ -5,6 +5,10 @@ services:
   extract-adobe:
     image: python:3.11-slim
     user: root
+    deploy:
+      resources:
+        limits:
+          memory: 4g
     volumes:
       - fontdata:/data
       - ./.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
