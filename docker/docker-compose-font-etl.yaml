@@ -7,7 +7,7 @@ services:
     user: root
     volumes:
       - fontdata:/data
-      - /mnt/block/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
+      - - ./docker/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
     working_dir: /data
     command:
       - bash
