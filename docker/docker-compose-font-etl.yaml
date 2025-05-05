@@ -60,7 +60,7 @@ services:
         python3 /workspace/generate_synthetic_images.py \
           --fonts_dir /data/GoogleFonts \
           --out_dir  /data/Synthetic \
-          --images_per_font 200
+          --images_per_font 1,000
     depends_on:
       extract-adobe:
         condition: service_completed_successfully
