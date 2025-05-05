@@ -13,4 +13,4 @@ services:
       - --out_dir
       - /data/Synthetic
       - --images_per_font
-      - "200"
+      - "1000"
