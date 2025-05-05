@@ -12,4 +12,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY generate_synthetic_images.py .
 
-ENTRYPOINT ["python3", "generate_synthetic_images.py"]
+CMD ["python3", "generate_synthetic_images.py"]
