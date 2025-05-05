@@ -22,9 +22,16 @@ for root, dirs, files in os.walk(font_dir):
                 for idx, text in enumerate(text_samples):
                     img = Image.new("RGB", img_size, color="white")
                     draw = ImageDraw.Draw(img)
-                    w, h = draw.textsize(text, font=font)
-                    draw.text(((img_size[0] - w) / 2, (img_size[1] - h) / 2), text, fill="black", font=font)
+                    # Use textbbox instead of textsize
+                    bbox = draw.textbbox((0, 0), text, font=font)
+                    w = bbox[2] - bbox[0]
+                    h = bbox[3] - bbox[1]
+                    draw.text(
+                        ((img_size[0] - w) / 2, (img_size[1] - h) / 2),
+                        text,
+                        fill="black",
+                        font=font,
+                    )
                     img.save(os.path.join(save_dir, f"{idx}.png"))
             except Exception as e:
                 print(f"Skipping {font_file}: {e}")
-
