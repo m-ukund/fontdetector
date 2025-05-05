@@ -8,6 +8,8 @@ services:
     volumes:
       - /mnt/block100:/data
     command:
+      - python3
+      - generate_synthetic_images.py
       - --fonts_dir
       - /data/GoogleFonts
       - --out_dir
