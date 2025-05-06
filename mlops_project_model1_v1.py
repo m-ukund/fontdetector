@@ -171,7 +171,7 @@ for epoch in range(config["initial_epochs"]):
     print(f"[Init Epoch {epoch+1}] Train Acc: {train_acc:.4f}, Val Acc: {val_acc:.4f}, Time: {time.time() - start_time:.2f}s")
     if val_loss < best_val_loss:
         best_val_loss = val_loss
-        torch.save(resnet50_model.state_dict(), "best_resnet50.pth")
+        torch.save(resnet50_model.state_dict(), "/mnt/block20/best_resnet50.pth")
         print("  ↳ Model saved.")
 
 ### Phase 2: Unfreeze and Fine-tune All
@@ -189,7 +189,7 @@ for epoch in range(config["initial_epochs"], config["total_epochs"]):
 
     if val_loss < best_val_loss:
         best_val_loss = val_loss
-        torch.save(resnet50_model.state_dict(), "best_resnet50.pth")
+        torch.save(resnet50_model.state_dict(), "/mnt/block20/best_resnet50.pth")
         patience_counter = 0
         print("  ↳ Model saved.")
     else:
@@ -200,7 +200,7 @@ for epoch in range(config["initial_epochs"], config["total_epochs"]):
             break
 
 ### Final Evaluation
-resnet50_model.load_state_dict(torch.load("best_resnet50.pth"))
+resnet50_model.load_state_dict(torch.load("/mnt/block20/best_resnet50.pth"))
 test_loss, test_acc = validate(resnet50_model, test_loader, criterion, device)
 print(f"Test Accuracy: {test_acc * 100:.2f}%")
 
