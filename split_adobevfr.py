@@ -2,8 +2,8 @@ import os
 import shutil
 import random
 
-source_dir = '/mnt/object/datasets/adobevfr'
-target_dir = '/mnt/object/datasets/adobevfr_split'
+source_dir = '/mnt/block20/datasets/adobevfr'
+target_dir = '/mnt/block20/datasets/adobevfr_split'
 split_ratio = (0.7, 0.15, 0.15)  # train, val, eval
 
 os.makedirs(target_dir, exist_ok=True)
