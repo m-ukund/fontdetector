@@ -71,7 +71,7 @@ config = {
     "color_jitter_saturation": 0.2,
     "color_jitter_hue": 0.1,
     "num_classes": 200,  # Update this with your number of fonts
-    "data_dir": os.getenv("FONTS_DATA_DIR", "adobe_vfr")
+    "data_dir": os.getenv("FONTS_DATA_DIR", "/mnt/block20/adobe_vfr")
 }
 
 ### Transforms
