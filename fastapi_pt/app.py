@@ -27,7 +27,7 @@ class PredictionResponse(BaseModel):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load font class names from the font_subset.txt file
-FONT_LIST_PATH = "font_subset.txt"
+FONT_LIST_PATH = "fontsubset.txt"
 
 try:
     with open(FONT_LIST_PATH, "r") as f:
@@ -38,7 +38,7 @@ except Exception as e:
     raise RuntimeError(f"Failed to load font classes: {str(e)}")
 
 # Load the font detection model
-MODEL_PATH = "font_model.pth"
+MODEL_PATH = "Deepfont.pth"
 try:
     model = torch.load(MODEL_PATH, map_location=device)
     model.to(device)
