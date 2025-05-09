@@ -1,0 +1,55 @@
+name: font_detector_eval
+services:
+  fastapi_server:
+    build:
+      context: /home/cc/fontdetector/fastapi_pt  # updated to point to fastapi_pt
+      dockerfile: Dockerfile
+    container_name: fastapi_server
+    ports:
+      - "8000:8000"
+
+  flask_client:
+    build:
+      context: /home/cc/fontdetector/font_client  # adjust if your Flask app is elsewhere
+      dockerfile: Dockerfile
+    container_name: flask_client
+    ports:
+      - "5000:5000"
+    environment:
+      - FASTAPI_SERVER_URL=http://fastapi_server:8000
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  jupyter:
+    image: quay.io/jupyter/pytorch-notebook:pytorch-2.5.1
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - FONT_DATA_DIR=/mnt/FontDataset
+    volumes:
+      - /home/cc/fontdetector/workspace:/home/jovyan/work
+      - font_data:/mnt
+    command: >
+      bash -c "python3 -m pip install alibi-detect && start-notebook.sh"
+
+volumes:
+  font_data:
+    external: true
