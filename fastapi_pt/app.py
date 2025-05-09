@@ -26,6 +26,17 @@ class PredictionResponse(BaseModel):
 # Set device (GPU if available, otherwise CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Load font class names from the font_subset.txt file
+FONT_LIST_PATH = "font_subset.txt"
+
+try:
+    with open(FONT_LIST_PATH, "r") as f:
+        classes = [line.strip() for line in f if line.strip()]
+    if len(classes) != 100:
+        raise ValueError(f"Expected 100 fonts, but found {len(classes)} in {FONT_LIST_PATH}")
+except Exception as e:
+    raise RuntimeError(f"Failed to load font classes: {str(e)}")
+
 # Load the font detection model
 MODEL_PATH = "font_model.pth"
 try:
@@ -34,11 +45,6 @@ try:
     model.eval()
 except Exception as e:
     raise RuntimeError(f"Failed to load model: {str(e)}")
-
-# Define your 100 font class labels (example: Font1, Font2, ..., Font100)
-classes = [f"Font{i+1}" for i in range(100)]
-# 👉 OR if you have actual font names, replace with your list:
-# classes = ["Arial", "Times New Roman", "Courier", ..., "Font100"]
 
 # Image preprocessing
 def preprocess_image(img):
