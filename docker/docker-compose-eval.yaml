@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  fetch_adobevfr_filtered:
+    image: python:3.11
+    container_name: fetch_adobevfr_filtered
+    volumes:
+      - adobevfr_filtered:/mnt/adobevfr
+    working_dir: /mnt/adobevfr
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y rclone &&
+        mkdir -p /mnt/adobevfr/evaluation_filtered &&
+        rclone sync chi_tacc:object-persist-41/datasets/adobevfr/evaluation_filtered /mnt/adobevfr/evaluation_filtered --progress
+      "
+
+volumes:
+  adobevfr_filtered:
+    external: true
