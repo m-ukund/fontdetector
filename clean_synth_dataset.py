@@ -4,11 +4,11 @@ import shutil
 DATASET_PATH = '/mnt/block100/Synthetic'
 FONT_LIST_PATH = '/home/cc/fontdetector/fastapi_pt/fontsubset.txt'
 
-# Load font subset (100 fonts)
+# Load and normalize font subset (remove trailing Std if present)
 with open(FONT_LIST_PATH, 'r') as f:
-    font_subset = set(line.strip() for line in f if line.strip())
+    font_subset = set(line.strip().removesuffix('Std') for line in f if line.strip())
 
-print(f"Loaded {len(font_subset)} fonts from subset.")
+print(f"Loaded {len(font_subset)} normalized fonts from subset.")
 print("Subset sample:", list(font_subset)[:5])
 
 # Loop through each folder
