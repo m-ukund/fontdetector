@@ -1,0 +1,22 @@
+version: '3.8'
+
+volumes:
+  font_data:
+    external: true  # This is your Docker volume for the dataset
+
+services:
+  init-font-data:
+    image: rclone/rclone:latest
+    container_name: init_font_data
+    environment:
+      - RCLONE_CONFIG=/config/rclone.conf
+    volumes:
+      - font_data:/data  # Mount your Docker volume here
+      - ./rclone.conf:/config/rclone.conf  # Local rclone config file
+    command: >
+      bash -c "
+        echo 'Starting dataset sync from chi_tacc:object-persist-41...';
+        rclone sync chi_tacc:object-persist-41 /data --progress;
+        echo 'Dataset sync complete.';
+      "
+    restart: "no"
