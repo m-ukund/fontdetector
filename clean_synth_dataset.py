@@ -26,9 +26,9 @@ for folder in os.listdir(DATASET_PATH):
                 print(f"Keeping: {folder} (matches {matched_font} and is Regular)")
             else:
                 print(f"Deleting: {folder} (matches {matched_font} but not Regular)")
-                # shutil.rmtree(folder_path)
+                shutil.rmtree(folder_path)
         else:
             print(f"Deleting: {folder} (no match in font subset)")
-            # shutil.rmtree(folder_path)
+            shutil.rmtree(folder_path)
 
 print("Dry run complete. Uncomment shutil.rmtree() to enable deletion.")
