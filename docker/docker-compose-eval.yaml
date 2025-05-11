@@ -21,7 +21,7 @@ services:
         apt-get update && apt-get install -y rclone
 
         echo "Syncing data into /data/font-detector/evaluation_filtered..."
-        rclone sync chi_tacc:object-persist-project41/evaluation_filtered /data/font-detector/evaluation_filtered --progress
+        rclone sync chi_tacc:object-persist-project41/datasetst/adobevfr/evaluation_filtered /data/font-detector/evaluation_filtered --progress
 
         echo "Done syncing."
     restart: "no"
