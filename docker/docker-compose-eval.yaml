@@ -6,7 +6,7 @@ services:
     container_name: fetch_evaluation_filtered
     volumes:
       - adobevfr_filtered:/data
-      - ~/.config/rclone:/root/.config/rclone:ro
+      - /home/cc/.config/rclone:/root/.config/rclone:ro
     working_dir: /data
     command:
       - bash
