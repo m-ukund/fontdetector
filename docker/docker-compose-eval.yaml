@@ -12,18 +12,22 @@ services:
       - bash
       - -c
       - |
-        set -e
+        set -ex
 
-        echo "Creating target directory..."
+        echo "Create target directory"
         mkdir -p /data/font-detector/evaluation_filtered
 
-        echo "Installing rclone..."
+        echo "Install rclone"
         apt-get update && apt-get install -y rclone
 
-        echo "Syncing data into /data/font-detector/evaluation_filtered..."
-        rclone sync chi_tacc:object-persist-project41/datasetst/adobevfr/evaluation_filtered /data/font-detector/evaluation_filtered --progress
+        echo "List contents before sync:"
+        rclone ls chi_tacc:object-persist-project41/datasets/adobevfr/evaluation_filtered | head
+
+        echo "Starting sync..."
+        rclone sync chi_tacc:object-persist-project41/datasets/adobevfr/evaluation_filtered /data/font-detector/evaluation_filtered --progress
 
         echo "Done syncing."
+        ls -lh /data/font-detector/evaluation_filtered | head
     restart: "no"
 
 volumes:
