@@ -7,23 +7,23 @@ services:
     volumes:
       - adobevfr_filtered:/data
       - ~/.config/rclone:/root/.config/rclone:ro
-    working_dir: /data/font-detector
+    working_dir: /data
     command:
       - bash
       - -c
       - |
         set -e
 
-        echo "Creating /data/font-detector..."
-        mkdir -p /data/font-detector && cd /data/font-detector
+        echo "Creating target directory..."
+        mkdir -p /data/font-detector/evaluation_filtered
 
         echo "Installing rclone..."
         apt-get update && apt-get install -y rclone
 
-        echo "Syncing evaluation_filtered from object storage..."
-        rclone sync chi_tacc:object-persist-project41/evaluation_filtered ./evaluation_filtered --progress
+        echo "Syncing data into /data/font-detector/evaluation_filtered..."
+        rclone sync chi_tacc:object-persist-project41/evaluation_filtered /data/font-detector/evaluation_filtered --progress
 
-        echo "Done syncing evaluation_filtered!"
+        echo "Done syncing."
     restart: "no"
 
 volumes:
