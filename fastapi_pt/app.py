@@ -7,6 +7,11 @@ import io
 import os
 from prometheus_fastapi_instrumentator import Instrumentator
 import tritonclient.http as httpclient
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI
 app = FastAPI(
@@ -28,14 +33,34 @@ TRITON_SERVER_URL = os.getenv("TRITON_SERVER_URL", "localhost:8000")
 MODEL_NAME = os.getenv("MODEL_NAME", "font_detector")
 
 # Initialize Triton client
-triton_client = httpclient.InferenceServerClient(url=TRITON_SERVER_URL)
+try:
+    triton_client = httpclient.InferenceServerClient(url=TRITON_SERVER_URL)
+    logger.info(f"Connected to Triton server at {TRITON_SERVER_URL}")
+except Exception as e:
+    logger.error(f"Failed to connect to Triton server: {e}")
+    raise
+
+def validate_image(image_data: bytes) -> bool:
+    """Validate that the image data is valid and can be opened."""
+    try:
+        Image.open(io.BytesIO(image_data))
+        return True
+    except Exception:
+        return False
 
 @app.post("/predict", response_model=PredictionResponse)
-def predict_image(request: ImageRequest):
+async def predict_image(request: ImageRequest):
     try:
         # Decode base64 image
-        image_data = base64.b64decode(request.image)
-        
+        try:
+            image_data = base64.b64decode(request.image)
+        except base64.binascii.Error:
+            raise HTTPException(status_code=400, detail="Invalid base64 encoding")
+
+        # Validate image
+        if not validate_image(image_data):
+            raise HTTPException(status_code=400, detail="Invalid image format")
+
         # Prepare inputs
         inputs = []
         inputs.append(httpclient.InferInput("INPUT_IMAGE", [1, 1], "BYTES"))
@@ -48,21 +73,42 @@ def predict_image(request: ImageRequest):
         outputs.append(httpclient.InferRequestedOutput("PROBABILITY", binary_data=False))
 
         # Run inference
-        results = triton_client.infer(model_name=MODEL_NAME, inputs=inputs, outputs=outputs)
+        try:
+            results = triton_client.infer(model_name=MODEL_NAME, inputs=inputs, outputs=outputs)
+        except Exception as e:
+            logger.error(f"Triton inference error: {e}")
+            raise HTTPException(status_code=503, detail="Model inference service unavailable")
 
         # Get results
-        predicted_class = results.as_numpy("FONT_LABEL")[0,0]
-        probability = results.as_numpy("PROBABILITY")[0,0]
+        try:
+            predicted_class = results.as_numpy("FONT_LABEL")[0,0]
+            probability = results.as_numpy("PROBABILITY")[0,0]
+        except Exception as e:
+            logger.error(f"Error processing model output: {e}")
+            raise HTTPException(status_code=500, detail="Error processing model output")
 
         return PredictionResponse(
             prediction=predicted_class,
             probability=float(probability)
         )
 
-    except base64.binascii.Error:
-        raise HTTPException(status_code=400, detail="Invalid base64 input")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# Add health check endpoint
+@app.get("/health")
+async def health_check():
+    try:
+        # Check Triton server health
+        if not triton_client.is_server_ready():
+            raise HTTPException(status_code=503, detail="Triton server not ready")
+        return {"status": "healthy"}
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        raise HTTPException(status_code=503, detail="Service unhealthy")
 
 # Add Prometheus metrics
 Instrumentator().instrument(app).expose(app)
