@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import base64
-import torch
-import torch.nn.functional as F
-import torchvision.transforms as transforms
+import numpy as np
 from PIL import Image
 import io
+import os
 from prometheus_fastapi_instrumentator import Instrumentator
+import tritonclient.http as httpclient
 
 # Initialize FastAPI
 app = FastAPI(
@@ -23,59 +23,40 @@ class PredictionResponse(BaseModel):
     prediction: str
     probability: float = Field(..., ge=0, le=1)
 
-# Set device (GPU if available, otherwise CPU)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Get environment variables
+TRITON_SERVER_URL = os.getenv("TRITON_SERVER_URL", "localhost:8000")
+MODEL_NAME = os.getenv("MODEL_NAME", "font_detector")
 
-# Load font class names from the font_subset.txt file
-FONT_LIST_PATH = "fontsubset.txt"
-
-try:
-    with open(FONT_LIST_PATH, "r") as f:
-        classes = [line.strip() for line in f if line.strip()]
-    if len(classes) != 100:
-        raise ValueError(f"Expected 100 fonts, but found {len(classes)} in {FONT_LIST_PATH}")
-except Exception as e:
-    raise RuntimeError(f"Failed to load font classes: {str(e)}")
-
-# Load the font detection model
-MODEL_PATH = "Deepfont.pth"
-try:
-    model = torch.load(MODEL_PATH, map_location=device)
-    model.to(device)
-    model.eval()
-except Exception as e:
-    raise RuntimeError(f"Failed to load model: {str(e)}")
-
-# Image preprocessing
-def preprocess_image(img):
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-    return transform(img).unsqueeze(0)
+# Initialize Triton client
+triton_client = httpclient.InferenceServerClient(url=TRITON_SERVER_URL)
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict_image(request: ImageRequest):
     try:
         # Decode base64 image
         image_data = base64.b64decode(request.image)
-        image = Image.open(io.BytesIO(image_data)).convert("RGB")
+        
+        # Prepare inputs
+        inputs = []
+        inputs.append(httpclient.InferInput("INPUT_IMAGE", [1, 1], "BYTES"))
+        input_data = np.array([[request.image]], dtype=object)
+        inputs[0].set_data_from_numpy(input_data)
 
-        # Preprocess
-        image = preprocess_image(image).to(device)
+        # Prepare outputs
+        outputs = []
+        outputs.append(httpclient.InferRequestedOutput("FONT_LABEL", binary_data=False))
+        outputs.append(httpclient.InferRequestedOutput("PROBABILITY", binary_data=False))
 
-        # Inference
-        with torch.no_grad():
-            output = model(image)
-            probabilities = F.softmax(output, dim=1)
-            predicted_class = torch.argmax(probabilities, 1).item()
-            confidence = probabilities[0, predicted_class].item()
+        # Run inference
+        results = triton_client.infer(model_name=MODEL_NAME, inputs=inputs, outputs=outputs)
+
+        # Get results
+        predicted_class = results.as_numpy("FONT_LABEL")[0,0]
+        probability = results.as_numpy("PROBABILITY")[0,0]
 
         return PredictionResponse(
-            prediction=classes[predicted_class],
-            probability=confidence
+            prediction=predicted_class,
+            probability=float(probability)
         )
 
     except base64.binascii.Error:
