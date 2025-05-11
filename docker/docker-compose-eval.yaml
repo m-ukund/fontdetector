@@ -1,20 +1,30 @@
 version: "3.8"
 
 services:
-  fetch_adobevfr_filtered:
+  fetch_evaluation_filtered:
     image: python:3.11
-    container_name: fetch_adobevfr_filtered
+    container_name: fetch_evaluation_filtered
     volumes:
-      - adobevfr_filtered:/mnt/adobevfr
-      - ~/.config/rclone:/root/.config/rclone:ro 
-    working_dir: /mnt/adobevfr
-    command: >
-      bash -c "
-        apt-get update &&
-        apt-get install -y rclone &&
-        mkdir -p /mnt/adobevfr/evaluation_filtered &&
-        rclone sync chi_tacc:object-persist-41/datasets/adobevfr/evaluation_filtered /mnt/adobevfr/evaluation_filtered --progress
-      "
+      - adobevfr_filtered:/data
+      - ~/.config/rclone:/root/.config/rclone:ro
+    working_dir: /data/font-detector
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+
+        echo "Creating /data/font-detector..."
+        mkdir -p /data/font-detector && cd /data/font-detector
+
+        echo "Installing rclone..."
+        apt-get update && apt-get install -y rclone
+
+        echo "Syncing evaluation_filtered from object storage..."
+        rclone sync chi_tacc:object-persist-project41/evaluation_filtered ./evaluation_filtered --progress
+
+        echo "Done syncing evaluation_filtered!"
+    restart: "no"
 
 volumes:
   adobevfr_filtered:
