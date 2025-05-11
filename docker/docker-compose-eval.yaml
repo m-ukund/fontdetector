@@ -6,6 +6,7 @@ services:
     container_name: fetch_adobevfr_filtered
     volumes:
       - adobevfr_filtered:/mnt/adobevfr
+      - ~/.config/rclone:/root/.config/rclone:ro 
     working_dir: /mnt/adobevfr
     command: >
       bash -c "
