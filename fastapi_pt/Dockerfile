@@ -16,7 +16,7 @@ COPY . .
 COPY font_model.pth /app/
 
 # Expose FastAPI port
-EXPOSE 8000
+EXPOSE 8080
 
 # Command to run FastAPI
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
