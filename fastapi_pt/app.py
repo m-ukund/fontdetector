@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 import base64
 import numpy as np
@@ -8,6 +8,7 @@ import os
 from prometheus_fastapi_instrumentator import Instrumentator
 import tritonclient.http as httpclient
 import logging
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,14 +24,17 @@ app = FastAPI(
 # Define request and response models
 class ImageRequest(BaseModel):
     image: str  # Base64 encoded image
+    model_version: Optional[str] = None  # Optional model version
 
 class PredictionResponse(BaseModel):
     prediction: str
     probability: float = Field(..., ge=0, le=1)
+    model_version: str
 
 # Get environment variables
 TRITON_SERVER_URL = os.getenv("TRITON_SERVER_URL", "localhost:8000")
 MODEL_NAME = os.getenv("MODEL_NAME", "font_detector")
+DEFAULT_MODEL_VERSION = os.getenv("DEFAULT_MODEL_VERSION", "1")
 
 # Initialize Triton client
 try:
@@ -48,6 +52,16 @@ def validate_image(image_data: bytes) -> bool:
     except Exception:
         return False
 
+@app.get("/model/versions")
+async def get_model_versions():
+    """Get available model versions."""
+    try:
+        model_metadata = triton_client.get_model_metadata(MODEL_NAME)
+        return {"versions": model_metadata.get("versions", [])}
+    except Exception as e:
+        logger.error(f"Error getting model versions: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving model versions")
+
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_image(request: ImageRequest):
     try:
@@ -60,6 +74,9 @@ async def predict_image(request: ImageRequest):
         # Validate image
         if not validate_image(image_data):
             raise HTTPException(status_code=400, detail="Invalid image format")
+
+        # Use provided version or default
+        model_version = request.model_version or DEFAULT_MODEL_VERSION
 
         # Prepare inputs
         inputs = []
@@ -74,7 +91,12 @@ async def predict_image(request: ImageRequest):
 
         # Run inference
         try:
-            results = triton_client.infer(model_name=MODEL_NAME, inputs=inputs, outputs=outputs)
+            results = triton_client.infer(
+                model_name=MODEL_NAME,
+                model_version=model_version,
+                inputs=inputs,
+                outputs=outputs
+            )
         except Exception as e:
             logger.error(f"Triton inference error: {e}")
             raise HTTPException(status_code=503, detail="Model inference service unavailable")
@@ -89,7 +111,8 @@ async def predict_image(request: ImageRequest):
 
         return PredictionResponse(
             prediction=predicted_class,
-            probability=float(probability)
+            probability=float(probability),
+            model_version=model_version
         )
 
     except HTTPException:
