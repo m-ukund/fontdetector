@@ -9,6 +9,9 @@ from prometheus_fastapi_instrumentator import Instrumentator
 import tritonclient.http as httpclient
 import logging
 from typing import Optional
+from canary_eval import CanaryEvaluator
+import uuid
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,6 +47,13 @@ except Exception as e:
     logger.error(f"Failed to connect to Triton server: {e}")
     raise
 
+# Initialize canary evaluator
+canary_evaluator = CanaryEvaluator(
+    canary_traffic_percentage=0.1,  # Route 10% of traffic to canary
+    performance_threshold=0.95,     # Canary must be at least 95% as good as production
+    min_requests=100               # Minimum requests before comparing performance
+)
+
 def validate_image(image_data: bytes) -> bool:
     """Validate that the image data is valid and can be opened."""
     try:
@@ -62,64 +72,89 @@ async def get_model_versions():
         logger.error(f"Error getting model versions: {e}")
         raise HTTPException(status_code=500, detail="Error retrieving model versions")
 
-@app.post("/predict", response_model=PredictionResponse)
-async def predict_image(request: ImageRequest):
+@app.post("/predict")
+async def predict(request: Request):
     try:
-        # Decode base64 image
-        try:
-            image_data = base64.b64decode(request.image)
-        except base64.binascii.Error:
-            raise HTTPException(status_code=400, detail="Invalid base64 encoding")
-
-        # Validate image
-        if not validate_image(image_data):
-            raise HTTPException(status_code=400, detail="Invalid image format")
-
-        # Use provided version or default
-        model_version = request.model_version or DEFAULT_MODEL_VERSION
-
-        # Prepare inputs
-        inputs = []
-        inputs.append(httpclient.InferInput("INPUT_IMAGE", [1, 1], "BYTES"))
-        input_data = np.array([[request.image]], dtype=object)
-        inputs[0].set_data_from_numpy(input_data)
-
-        # Prepare outputs
-        outputs = []
-        outputs.append(httpclient.InferRequestedOutput("FONT_LABEL", binary_data=False))
-        outputs.append(httpclient.InferRequestedOutput("PROBABILITY", binary_data=False))
-
-        # Run inference
-        try:
-            results = triton_client.infer(
-                model_name=MODEL_NAME,
-                model_version=model_version,
-                inputs=inputs,
-                outputs=outputs
-            )
-        except Exception as e:
-            logger.error(f"Triton inference error: {e}")
-            raise HTTPException(status_code=503, detail="Model inference service unavailable")
-
-        # Get results
-        try:
-            predicted_class = results.as_numpy("FONT_LABEL")[0,0]
-            probability = results.as_numpy("PROBABILITY")[0,0]
-        except Exception as e:
-            logger.error(f"Error processing model output: {e}")
-            raise HTTPException(status_code=500, detail="Error processing model output")
-
-        return PredictionResponse(
-            prediction=predicted_class,
-            probability=float(probability),
-            model_version=model_version
+        # Get image data from request
+        image_data = await request.body()
+        
+        # Generate prediction ID
+        prediction_id = str(uuid.uuid4())
+        
+        # Determine if request should go to canary
+        is_canary = canary_evaluator.should_route_to_canary()
+        
+        # Get prediction from appropriate model
+        start_time = time.time()
+        if is_canary:
+            prediction, probability = get_canary_prediction(image_data)
+        else:
+            prediction, probability = get_production_prediction(image_data)
+        latency = time.time() - start_time
+        
+        # Save prediction data
+        canary_evaluator.save_prediction(
+            prediction_id=prediction_id,
+            image_data=image_data.decode(),
+            prediction=prediction,
+            probability=probability,
+            is_canary=is_canary,
+            latency=latency
         )
-
-    except HTTPException:
-        raise
+        
+        # Update metrics (initially assuming prediction is correct)
+        canary_evaluator.update_metrics(
+            is_canary=is_canary,
+            is_correct=True,  # Will be updated when feedback is received
+            latency=latency
+        )
+        
+        return {
+            "prediction_id": prediction_id,
+            "prediction": prediction,
+            "probability": probability,
+            "is_canary": is_canary
+        }
+        
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        logger.error(f"Error in prediction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/feedback/{prediction_id}")
+async def submit_feedback(prediction_id: str, feedback: Feedback):
+    try:
+        # Update metrics with feedback
+        canary_evaluator.update_metrics(
+            is_canary=feedback.is_canary,
+            is_correct=feedback.is_correct,
+            latency=feedback.latency,
+            has_feedback=True
+        )
+        
+        # Check if canary should be rolled back
+        if feedback.is_canary and canary_evaluator.should_rollback():
+            logger.warning("Canary performance below threshold - initiating rollback")
+            # TODO: Implement rollback logic
+            
+        return {"status": "feedback recorded"}
+        
+    except Exception as e:
+        logger.error(f"Error recording feedback: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/canary/metrics")
+async def get_canary_metrics():
+    """Get current canary and production metrics"""
+    try:
+        metrics = canary_evaluator.get_metrics()
+        comparison = canary_evaluator.compare_performance()
+        return {
+            "metrics": metrics,
+            "comparison": comparison
+        }
+    except Exception as e:
+        logger.error(f"Error getting metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Add health check endpoint
 @app.get("/health")

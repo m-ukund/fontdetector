@@ -1,0 +1,63 @@
+name: "font_detector"
+backend: "python"
+max_batch_size: 32
+input [
+  {
+    name: "INPUT_IMAGE"
+    data_type: TYPE_STRING
+    dims: [1]
+  }
+]
+output [
+  {
+    name: "FONT_LABEL"
+    data_type: TYPE_STRING
+    dims: [1]
+  },
+  {
+    name: "PROBABILITY"
+    data_type: TYPE_FP32
+    dims: [1]
+  }
+]
+instance_group [
+  {
+    count: 2
+    kind: KIND_GPU
+    gpus: [0]
+  },
+  {
+    count: 2
+    kind: KIND_GPU
+    gpus: [1]
+  }
+]
+dynamic_batching {
+  preferred_batch_size: [4, 8, 16, 32]
+  max_queue_delay_microseconds: 100
+  preserve_ordering: true
+}
+optimization {
+  execution_accelerators {
+    gpu_execution_accelerator : [ {
+      name : "tensorrt"
+    }]
+  }
+}
+model_metrics {
+  metrics {
+    name: "inference_latency"
+    type: "gauge"
+    description: "Model inference latency in microseconds"
+  }
+  metrics {
+    name: "queue_latency"
+    type: "gauge"
+    description: "Request queue latency in microseconds"
+  }
+  metrics {
+    name: "batch_size"
+    type: "gauge"
+    description: "Actual batch size used for inference"
+  }
+} 
