@@ -33,9 +33,9 @@ link to their contributions in all repos here. -->
 | Name                            | Responsible for (subject to change) | Link to their commits in this repo |
 |---------------------------------|-----------------|------------------------------------|
 | All team members                |Overall design, integration, and testing|                                    |
-| Team member 1: Mukund Ramakrishnan           |Model training and training platforms (units 4-5)|        *To be added*                            |
-| Team member 2: Alex Gonzalez   |Model serving and monitoring (units 6-7)|            *To be added*                        |
-| Team member 3: Austin Ebel                    |Data pipeline (unit 8)|         *To be added*                           |
+| Team member 1: Mukund Ramakrishnan           |Model training and training platforms (units 4-5)|        [Here](https://github.com/m-ukund/fontdetector/commits/main/?author=m-ukund)                           |
+| Team member 2: Alex Gonzalez   |Model serving and monitoring (units 6-7)|            [Here](https://github.com/m-ukund/fontdetector/commits/main/?author=Adgonzalez2018)                        |
+| Team member 3: Austin Ebel                    |Data pipeline (unit 8)|        [Here](https://github.com/m-ukund/fontdetector/commits/main/?author=abe5240)                          |
 
 
 ### System diagram
